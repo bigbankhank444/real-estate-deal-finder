@@ -1,0 +1,16 @@
+Object.assign(process.env, {
+  DATABASE_URL: 'postgres://test:test@localhost:5432/testdb',
+  OPENROUTER_API_KEY: 'test-openrouter-key',
+  OPENROUTER_MODEL: 'anthropic/claude-sonnet-4-5',
+  SMTP_HOST: 'smtp.test.com',
+  SMTP_PORT: '587',
+  SMTP_USER: 'test@test.com',
+  SMTP_PASS: 'test-smtp-pass',
+  EMAIL_FROM: 'from@test.com',
+  EMAIL_TO: 'to@test.com',
+  TWILIO_ACCOUNT_SID: 'ACtest1234567890',
+  TWILIO_AUTH_TOKEN: 'test-twilio-token',
+  TWILIO_FROM: '+10000000000',
+  SMS_TO: '+10000000001',
+  NODE_ENV: 'test',
+});
