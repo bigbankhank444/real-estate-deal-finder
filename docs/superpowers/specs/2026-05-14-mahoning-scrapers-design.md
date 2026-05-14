@@ -21,9 +21,12 @@ Implements real scraping logic for the existing scaffold. Five scrapers (three p
 | `src/scrapers/mahoning-probate.js` | New |
 | `src/scrapers/zillow.js` | Replace stub |
 | `src/scrapers/craigslist.js` | Replace stub |
-| `src/utils/browser.js` | New — shared Playwright launch helper |
+| `src/utils/browser.js` | New — shared Playwright launch helper + `delay()` |
 | `src/pipeline/collect.js` | Replace stub |
+| `src/pipeline/analyze.js` | Add probate address resolution logic |
 | `src/db/migrations/<timestamp>_create_deals.js` | New |
+| `config/index.js` | Add `scrapeDelayMs` field |
+| `.env.example` | Add `SCRAPE_DELAY_MS` |
 
 ---
 
@@ -61,6 +64,20 @@ Shared helper used by all five scrapers. Each scraper calls `launchBrowser()` at
 - Inject `Object.defineProperty(navigator, 'webdriver', { get: () => undefined })` via `addInitScript`
 - Random `waitForTimeout(1000 + Math.random() * 2000)` before first interaction on county sites
 
+### Rate Limiting
+
+A configurable `SCRAPE_DELAY_MS` env var (default: `2000`) throttles requests between page navigations on all public records scrapers. The `browser.js` helper exports a `delay()` function (`await delay()`) that public records scrapers call between each page navigation and each parcel/case detail fetch. Market scrapers (Zillow, Craigslist) use it between pagination requests only.
+
+Add to `.env.example`:
+```
+SCRAPE_DELAY_MS=2000
+```
+
+Add to `config/index.js` `getConfig()`:
+```js
+scrapeDelayMs: parseInt(process.env.SCRAPE_DELAY_MS || '2000', 10),
+```
+
 ---
 
 ## Public Records Scrapers
@@ -83,8 +100,18 @@ Shared helper used by all five scrapers. Each scraper calls `launchBrowser()` at
 
 - **Source:** `https://eprobate.mahoningcountyoh.gov` — public case search
 - **Data:** Estate cases filed in the last 90 days — decedent name, fiduciary/executor, filing date, case number
-- **Strategy:** Playwright queries for estate/administration cases within the last 90 days. Address is not on the probate record — `address` is `null` at scrape time; `analyze.js` cross-references via the auditor parcel search using the decedent name.
+- **Strategy:** Playwright queries for estate/administration cases within the last 90 days. Address is not on the probate record — `address` is `null` at scrape time.
 - **Output fields:** `signal_type: 'probate'`, `owner_name` = decedent name, `address: null`, `raw.fiduciary_name`, `raw.case_number`, `raw.filing_date`
+
+### Probate Address Resolution (in `analyze.js`)
+
+Because probate records contain no property address, `analyze.js` must attempt to resolve one before scoring. For each `signal_type: 'probate'` listing, `analyze.js`:
+
+1. Searches the Mahoning County Auditor parcel search (`https://auditor.mahoningcountyoh.gov/SearchResults?searchTerm=<owner_name>&Command=Combined`) using Playwright with `launchBrowser()`.
+2. Collects all result rows and applies fuzzy name matching: normalize both the decedent name and each result's owner name (lowercase, strip punctuation, sort tokens), then accept matches where the normalized token sets overlap ≥ 80%.
+3. If exactly one match is found above threshold, sets `address` on the listing.
+4. If zero or multiple ambiguous matches are found, sets `address: null` and logs a warning — the deal is still persisted and scored on name alone, but flagged in `raw.address_resolution_status` as `'unresolved'` or `'ambiguous'`.
+5. Never throws — a failed resolution is non-fatal.
 
 ---
 
@@ -173,7 +200,7 @@ exports.down = function(knex) {
 
 ## Out of Scope (This Phase)
 
-- `analyze.js` implementation (AI scoring + ARV calculation)
+- `analyze.js` AI scoring and ARV/fair_offer calculation (only probate address resolution is in scope)
 - `persist.js` implementation (upsert logic)
 - `notify.js` implementation
 - `facebook.js` and `fsbo.js` scrapers
