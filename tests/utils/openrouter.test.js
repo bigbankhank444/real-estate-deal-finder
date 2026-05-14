@@ -3,8 +3,7 @@ const axios = require('axios');
 
 describe('chat', () => {
   beforeEach(() => {
-    jest.resetModules();
-    axios.post = jest.fn();
+    axios.post.mockReset();
   });
 
   it('posts to OpenRouter with correct URL, model, messages, and auth header', async () => {
