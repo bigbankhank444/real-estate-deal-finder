@@ -51,7 +51,7 @@ Used in two places:
 1. **`analyze.js`** — Scores each listing (price vs. market, estimated ROI, red flags). Calls OpenRouter chat completion per listing or in batches.
 2. **`notify.js`** — Generates a plain-English digest of the top-scored deals for the email body.
 
-OpenRouter is accessed via a thin wrapper in `src/utils/openrouter.js` using `axios`. The model is configurable via `OPENROUTER_MODEL` env var (default: `openai/gpt-4o-mini`).
+OpenRouter is accessed via a thin wrapper in `src/utils/openrouter.js` using `axios`. The model is configurable via `OPENROUTER_MODEL` env var (default: `anthropic/claude-sonnet-4-5`).
 
 ### Database
 
@@ -61,9 +61,14 @@ PostgreSQL on Render managed add-on. `knex` is used for both query building and 
 - `src/utils/db.js` — exports a singleton `pg` client for use across pipeline stages
 - Migrations live in `src/db/migrations/`
 
-### Email
+### Notifications (Email + SMS)
 
-`nodemailer` configured via SMTP env vars. Wrapped in `src/utils/mailer.js`. Called only from `notify.js`.
+`notify.js` sends via two channels:
+
+1. **Email** — `nodemailer` configured via SMTP env vars. Wrapped in `src/utils/mailer.js`.
+2. **SMS** — Twilio SMS API. Wrapped in `src/utils/sms.js`. Sends a short summary of top deals (character-limited, plain text).
+
+Both run in `notify.js` after the AI digest is generated. Email gets the full formatted digest; SMS gets a condensed version (e.g., "3 deals found today. Top: 123 Main St — $210k, score 92. Check email for details.").
 
 ---
 
@@ -88,7 +93,8 @@ real-estate-deal-finder/
 │   └── utils/
 │       ├── db.js
 │       ├── openrouter.js
-│       └── mailer.js
+│       ├── mailer.js
+│       └── sms.js
 ├── config/
 │   └── index.js
 ├── scripts/
@@ -110,6 +116,7 @@ real-estate-deal-finder/
     "pg": "^8.x",
     "knex": "^3.x",
     "nodemailer": "^6.x",
+    "twilio": "^5.x",
     "dotenv": "^16.x",
     "axios": "^1.x"
   },
@@ -132,13 +139,17 @@ real-estate-deal-finder/
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Render Postgres connection string |
 | `OPENROUTER_API_KEY` | Yes | OpenRouter API key |
-| `OPENROUTER_MODEL` | No | Model to use (default: `openai/gpt-4o-mini`) |
+| `OPENROUTER_MODEL` | No | Model to use (default: `anthropic/claude-sonnet-4-5`) |
 | `SMTP_HOST` | Yes | SMTP server hostname |
 | `SMTP_PORT` | No | SMTP port (default: 587) |
 | `SMTP_USER` | Yes | SMTP username |
 | `SMTP_PASS` | Yes | SMTP password |
 | `EMAIL_FROM` | Yes | Sender address |
 | `EMAIL_TO` | Yes | Recipient address(es) |
+| `TWILIO_ACCOUNT_SID` | Yes | Twilio account SID |
+| `TWILIO_AUTH_TOKEN` | Yes | Twilio auth token |
+| `TWILIO_FROM` | Yes | Twilio sending phone number |
+| `SMS_TO` | Yes | Recipient phone number(s) for deal alerts |
 | `NODE_ENV` | No | `development` or `production` |
 
 `config/index.js` validates all required variables at startup and throws if any are missing.
