@@ -12,6 +12,9 @@ services:
         fromDatabase:
           name: real-estate-deals-db
           property: connectionString
+    # All other required env vars must be configured manually in the Render dashboard:
+    # OPENROUTER_API_KEY, OPENROUTER_MODEL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
+    # EMAIL_FROM, EMAIL_TO, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM, SMS_TO
 
 databases:
   - name: real-estate-deals-db
