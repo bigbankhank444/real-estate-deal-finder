@@ -24,6 +24,17 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
+      - name: Test DB connectivity
+        run: |
+          PGPASSWORD="${{ secrets.DB_PASSWORD }}" psql \
+            -h dpg-d838aje7r5hc73bh02n0-a.oregon-postgres.render.com \
+            -p 5432 \
+            -U real_estate_deals_user \
+            -d real_estate_deals \
+            -c "SELECT 1;" \
+            --no-password 2>&1 || echo "psql failed with exit $?"
+        continue-on-error: true
+
       - name: Run database migrations
         run: npm run migrate
         env:
