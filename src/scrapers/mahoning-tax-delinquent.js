@@ -1,6 +1,7 @@
 'use strict';
 
 const { launchBrowser } = require('../utils/browser');
+const { withRetry } = require('../utils/retry');
 
 const SOURCE_URL = 'https://auditor.mahoningcountyoh.gov/DelinquencyReport';
 
@@ -91,7 +92,10 @@ async function scrape() {
   const { browser, context, page } = await launchBrowser();
 
   try {
-    await page.goto(SOURCE_URL, { waitUntil: 'networkidle', timeout: 60_000 });
+    await withRetry(
+      () => page.goto(SOURCE_URL, { waitUntil: 'networkidle', timeout: 60_000 }),
+      3, 5000
+    );
 
     // Wait for the results table to appear
     await page.waitForSelector('table tbody tr', { timeout: 30_000 });
