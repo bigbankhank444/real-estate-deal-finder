@@ -144,17 +144,32 @@ async function scrape() {
       await new Promise(r => setTimeout(r, 800 + Math.random() * 700));
 
       // ── Collect list items ─────────────────────────────────────────────────
-      // Craigslist renders server-side HTML; results live in <ol class="cl-search-results">
+      // Uses a three-tier fallback: new CL UI (li.cl-search-result),
+      // old UI (ol.cl-search-results li), then [data-pid] attribute fallback.
       let items;
       try {
         items = await page.evaluate(() => {
-          const ol = document.querySelector('ol.cl-search-results');
-          if (!ol) return [];
+          function getResultItems() {
+            // Tier 1: new Craigslist UI (2024+)
+            const byClass = Array.from(document.querySelectorAll('li.cl-search-result'))
+              .filter(el => el.querySelector('a'));
+            if (byClass.length > 0) return byClass;
 
-          return Array.from(ol.querySelectorAll('li')).map(li => {
-            // Link element (try multiple selectors for forward-compat)
+            // Tier 2: old UI wrapper
+            const ol = document.querySelector('ol.cl-search-results');
+            if (ol) {
+              const olItems = Array.from(ol.querySelectorAll('li'));
+              if (olItems.length > 0) return olItems;
+            }
+
+            // Tier 3: attribute-based fallback
+            return Array.from(document.querySelectorAll('[data-pid]'));
+          }
+
+          return getResultItems().map(li => {
             const anchor =
               li.querySelector('a.cl-app-anchor') ||
+              li.querySelector('a.posting-title') ||
               li.querySelector('a.titlestring') ||
               li.querySelector('a[href*="craigslist.org"]') ||
               li.querySelector('a');
@@ -162,13 +177,12 @@ async function scrape() {
             const href  = anchor ? anchor.href : null;
             const title = anchor ? anchor.textContent.trim() : null;
 
-            // Price
             const priceEl =
               li.querySelector('.priceinfo') ||
+              li.querySelector('.result-price') ||
               li.querySelector('.price');
             const price = priceEl ? priceEl.textContent.trim() : null;
 
-            // Date
             const timeEl = li.querySelector('time');
             const postDate = timeEl
               ? (timeEl.getAttribute('datetime') || timeEl.textContent.trim())
@@ -183,6 +197,8 @@ async function scrape() {
       }
 
       if (!items || items.length === 0) {
+        const pageTitle = await page.title();
+        console.warn(`[craigslist] 0 items at offset ${offset}. Page title: "${pageTitle}". May be CAPTCHA or empty results.`);
         console.log(`[craigslist] No items found at offset ${offset}. Pagination complete.`);
         break;
       }
