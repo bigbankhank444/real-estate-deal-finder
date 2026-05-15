@@ -3,24 +3,12 @@ require('dotenv').config();
 const rawUrl = process.env.DATABASE_URL || '';
 const isLocal = rawUrl.includes('localhost') || rawUrl.includes('127.0.0.1');
 
-let connection;
-if (isLocal) {
-  connection = rawUrl;
-} else {
-  const u = new URL(rawUrl);
-  connection = {
-    host:     u.hostname,
-    port:     parseInt(u.port || '5432', 10),
-    database: u.pathname.replace(/^\//, ''),
-    user:     decodeURIComponent(u.username),
-    password: decodeURIComponent(u.password),
-    ssl:      true,
-  };
-}
-
 const knex = require('knex')({
   client: 'pg',
-  connection,
+  connection: {
+    connectionString: rawUrl,
+    ssl: isLocal ? false : { rejectUnauthorized: false },
+  },
   migrations: {
     directory: './src/db/migrations',
   },
