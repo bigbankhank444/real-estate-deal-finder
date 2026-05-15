@@ -197,8 +197,10 @@ async function scrape() {
       }
 
       if (!items || items.length === 0) {
-        const pageTitle = await page.title();
-        console.warn(`[craigslist] 0 items at offset ${offset}. Page title: "${pageTitle}". May be CAPTCHA or empty results.`);
+        if (offset === 0) {
+          const pageTitle = await page.title();
+          console.warn(`[craigslist] 0 items on first page. Page title: "${pageTitle}". May be CAPTCHA or empty results.`);
+        }
         console.log(`[craigslist] No items found at offset ${offset}. Pagination complete.`);
         break;
       }
