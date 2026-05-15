@@ -40,7 +40,6 @@ jobs:
         env:
           DATABASE_URL:                    ${{ secrets.DATABASE_URL }}
           NODE_ENV:                        production
-          NODE_TLS_REJECT_UNAUTHORIZED:    '0'
 
       - name: Run deal finder pipeline
         run: node src/index.js
@@ -59,4 +58,3 @@ jobs:
           TWILIO_FROM:                     ${{ secrets.TWILIO_FROM }}
           SMS_TO:                          ${{ secrets.SMS_TO }}
           NODE_ENV:                        production
-          NODE_TLS_REJECT_UNAUTHORIZED:    '0'

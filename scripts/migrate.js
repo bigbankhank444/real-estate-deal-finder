@@ -14,7 +14,7 @@ if (isLocal) {
     database: u.pathname.replace(/^\//, ''),
     user:     decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
-    ssl:      { rejectUnauthorized: false },
+    ssl:      true,
   };
 }
 
