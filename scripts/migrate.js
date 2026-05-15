@@ -2,10 +2,7 @@ require('dotenv').config();
 
 const knex = require('knex')({
   client: 'pg',
-  connection: {
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  },
+  connection: process.env.DATABASE_URL,
   migrations: {
     directory: './src/db/migrations',
   },

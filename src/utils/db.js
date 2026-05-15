@@ -5,8 +5,7 @@ let pool;
 
 function getDb() {
   if (!pool) {
-    const ssl = process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false;
-    pool = new Pool({ connectionString: getConfig().db.url, ssl });
+    pool = new Pool({ connectionString: getConfig().db.url });
   }
   return pool;
 }
