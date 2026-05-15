@@ -5,7 +5,9 @@ let pool;
 
 function getDb() {
   if (!pool) {
-    pool = new Pool({ connectionString: getConfig().db.url });
+    const url = getConfig().db.url;
+    const ssl = url.includes('localhost') ? false : { rejectUnauthorized: false };
+    pool = new Pool({ connectionString: url, ssl });
   }
   return pool;
 }

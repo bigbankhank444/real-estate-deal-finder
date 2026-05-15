@@ -1,8 +1,13 @@
 require('dotenv').config();
 
+const isLocalDb = (process.env.DATABASE_URL || '').includes('localhost');
+
 const knex = require('knex')({
   client: 'pg',
-  connection: process.env.DATABASE_URL,
+  connection: {
+    connectionString: process.env.DATABASE_URL,
+    ssl: isLocalDb ? false : { rejectUnauthorized: false },
+  },
   migrations: {
     directory: './src/db/migrations',
   },
