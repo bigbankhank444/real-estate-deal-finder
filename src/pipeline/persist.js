@@ -27,7 +27,7 @@ async function persist(scoredListings) {
 
   const db = getDb();
 
-  const results = await Promise.all(
+  const settled = await Promise.allSettled(
     scoredListings.map((listing) => {
       const {
         address,
@@ -52,16 +52,24 @@ async function persist(scoredListings) {
         estimated_value,
         arv,
         fair_offer,
-        comparables != null ? JSON.stringify(comparables) : null,
+        comparables != null ? comparables : null,
         contact_info,
         source_url,
-        raw != null ? JSON.stringify(raw) : null,
+        raw != null ? raw : null,
         score,
       ]);
     })
   );
 
-  return results.flatMap((res) => res.rows);
+  return settled
+    .filter((r) => {
+      if (r.status === 'rejected') {
+        console.error('persist: failed to upsert listing:', r.reason);
+        return false;
+      }
+      return true;
+    })
+    .flatMap((r) => r.value.rows);
 }
 
 module.exports = { persist };

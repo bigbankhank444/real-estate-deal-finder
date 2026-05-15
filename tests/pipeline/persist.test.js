@@ -59,4 +59,20 @@ describe('persist', () => {
     expect(result).toEqual([]);
     expect(mockQuery).not.toHaveBeenCalled();
   });
+
+  it('returns rows from the successful listing when one upsert rejects', async () => {
+    const successRow = { ...SAMPLE_ROW, id: 2, address: '456 Elm St, Youngstown, OH 44501' };
+    mockQuery
+      .mockRejectedValueOnce(new Error('DB constraint violation'))
+      .mockResolvedValueOnce({ rows: [successRow] });
+
+    const listings = [
+      SAMPLE_LISTING,
+      { ...SAMPLE_LISTING, address: '456 Elm St, Youngstown, OH 44501' },
+    ];
+
+    const result = await persist(listings);
+
+    expect(result).toEqual([successRow]);
+  });
 });
