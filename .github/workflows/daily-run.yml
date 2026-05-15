@@ -27,23 +27,25 @@ jobs:
       - name: Run database migrations
         run: npm run migrate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NODE_ENV: production
+          DATABASE_URL:                    ${{ secrets.DATABASE_URL }}
+          NODE_ENV:                        production
+          NODE_TLS_REJECT_UNAUTHORIZED:    '0'
 
       - name: Run deal finder pipeline
         run: node src/index.js
         env:
-          DATABASE_URL:          ${{ secrets.DATABASE_URL }}
-          OPENROUTER_API_KEY:    ${{ secrets.OPENROUTER_API_KEY }}
-          OPENROUTER_MODEL:      ${{ secrets.OPENROUTER_MODEL }}
-          SMTP_HOST:             ${{ secrets.SMTP_HOST }}
-          SMTP_PORT:             ${{ secrets.SMTP_PORT }}
-          SMTP_USER:             ${{ secrets.SMTP_USER }}
-          SMTP_PASS:             ${{ secrets.SMTP_PASS }}
-          EMAIL_FROM:            ${{ secrets.EMAIL_FROM }}
-          EMAIL_TO:              ${{ secrets.EMAIL_TO }}
-          TWILIO_ACCOUNT_SID:    ${{ secrets.TWILIO_ACCOUNT_SID }}
-          TWILIO_AUTH_TOKEN:     ${{ secrets.TWILIO_AUTH_TOKEN }}
-          TWILIO_FROM:           ${{ secrets.TWILIO_FROM }}
-          SMS_TO:                ${{ secrets.SMS_TO }}
-          NODE_ENV:              production
+          DATABASE_URL:                    ${{ secrets.DATABASE_URL }}
+          OPENROUTER_API_KEY:              ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL:                ${{ secrets.OPENROUTER_MODEL }}
+          SMTP_HOST:                       ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:                       ${{ secrets.SMTP_PORT }}
+          SMTP_USER:                       ${{ secrets.SMTP_USER }}
+          SMTP_PASS:                       ${{ secrets.SMTP_PASS }}
+          EMAIL_FROM:                      ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO:                        ${{ secrets.EMAIL_TO }}
+          TWILIO_ACCOUNT_SID:              ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN:               ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_FROM:                     ${{ secrets.TWILIO_FROM }}
+          SMS_TO:                          ${{ secrets.SMS_TO }}
+          NODE_ENV:                        production
+          NODE_TLS_REJECT_UNAUTHORIZED:    '0'
