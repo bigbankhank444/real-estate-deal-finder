@@ -21,14 +21,21 @@ async function notify(deals) {
 
   const prompt = `You are a real estate investment analyst. Generate a concise plain-text (no markdown) email digest for the following high-score wholesale real estate deals. For each deal, provide a brief summary covering the address, score, signal type, asking price, and rationale. Keep it professional and actionable.\n\nDeals:\n\n${dealSummaries}`;
 
-  const digestText = await chat([{ role: 'user', content: prompt }]);
-
-  const subject = `Real Estate Deals — ${new Date().toLocaleDateString()}`;
-  await sendMail({ subject, text: digestText });
+  try {
+    const digestText = await chat([{ role: 'user', content: prompt }]);
+    const subject = `Real Estate Deals — ${new Date().toLocaleDateString()}`;
+    await sendMail({ subject, text: digestText });
+  } catch (err) {
+    console.error('notify: failed to send email digest:', err.message);
+  }
 
   const topDeal = qualifyingDeals[0];
   const smsBody = `RE Deal Alert: ${topDeal.address} | Score: ${topDeal.score}/100 | ${qualifyingDeals.length} deal(s) qualify today`.slice(0, 300);
-  await sendSMS(smsBody);
+  try {
+    await sendSMS(smsBody);
+  } catch (err) {
+    console.error('notify: failed to send SMS:', err.message);
+  }
 }
 
 module.exports = { notify };

@@ -55,6 +55,7 @@ describe('notify', () => {
     expect(Array.isArray(chatMessages)).toBe(true);
     expect(chatMessages[0].role).toBe('user');
     expect(chatMessages[0].content).toContain(HIGH_DEAL.address);
+    expect(chatMessages[0].content).not.toContain(LOW_DEAL.address);
 
     expect(sendMail).toHaveBeenCalledTimes(1);
     const mailArgs = sendMail.mock.calls[0][0];
