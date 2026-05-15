@@ -61,6 +61,40 @@ describe('analyze', () => {
 
     expect(results).toHaveLength(1);
     expect(results[0].score).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('failed to score listing'),
+      expect.any(String)
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('leaves score null when AI returns malformed JSON', async () => {
+    chat.mockResolvedValue('not valid json');
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const results = await analyze([SAMPLE_LISTING]);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].score).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('failed to score listing'),
+      expect.any(String)
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('leaves score null when AI returns an out-of-range score', async () => {
+    chat.mockResolvedValue('{"score": 150, "rationale": "Great deal"}');
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const results = await analyze([SAMPLE_LISTING]);
+
+    expect(results).toHaveLength(1);
+    expect(results[0].score).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('failed to score listing'),
+      expect.any(String)
+    );
     warnSpy.mockRestore();
   });
 

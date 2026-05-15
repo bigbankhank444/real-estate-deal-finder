@@ -28,8 +28,13 @@ Respond with ONLY this JSON object:
         throw new Error(`Invalid JSON response: ${response}`);
       }
 
-      if (parsed == null || typeof parsed.score !== 'number') {
-        throw new Error(`Missing score field in response: ${response}`);
+      const s = parsed.score;
+      if (!Number.isInteger(s) || s < 0 || s > 100) {
+        throw new Error(`Score out of range or not integer: ${s}`);
+      }
+
+      if (typeof parsed.rationale !== 'string') {
+        throw new Error(`Missing or invalid rationale: ${JSON.stringify(parsed.rationale)}`);
       }
 
       scored.score = parsed.score;
