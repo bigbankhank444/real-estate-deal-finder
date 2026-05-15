@@ -1,6 +1,7 @@
 'use strict';
 
 const { launchBrowser } = require('../utils/browser');
+const { withRetry } = require('../utils/retry');
 
 const FSBO_URL = 'https://www.zillow.com/mahoning-county-oh/fsbo/';
 const ZILLOW_BASE = 'https://www.zillow.com';
@@ -253,14 +254,17 @@ async function scrape() {
   const { browser, context, page } = await launchBrowser();
 
   try {
-    // ── Step 1: Navigate to the FSBO search page ──────────────────────────
-    await page.goto(FSBO_URL, { waitUntil: 'networkidle', timeout: 60_000 });
-
-    // ── Step 2: Extract __NEXT_DATA__ from search page ───────────────────
-    const searchData = await extractNextData(page);
-
-    if (!searchData) {
-      console.warn('[zillow] __NEXT_DATA__ not found on FSBO page — Zillow may have blocked this request.');
+    // ── Step 1: Navigate to the FSBO search page (with retry) ────────────
+    let searchData;
+    try {
+      searchData = await withRetry(async () => {
+        await page.goto(FSBO_URL, { waitUntil: 'networkidle', timeout: 60_000 });
+        const data = await extractNextData(page);
+        if (!data) throw new Error('__NEXT_DATA__ not found — Zillow may have blocked this request');
+        return data;
+      }, 3, 5000);
+    } catch (err) {
+      console.warn(`[zillow] All navigation attempts failed: ${err.message}`);
       return [];
     }
 
