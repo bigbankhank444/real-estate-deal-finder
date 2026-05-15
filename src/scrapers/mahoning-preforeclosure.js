@@ -1,6 +1,7 @@
 'use strict';
 
 const { launchBrowser } = require('../utils/browser');
+const { withRetry } = require('../utils/retry');
 
 const SOURCE_URL = 'https://ecourts.mahoningcountyoh.gov/eservices/';
 
@@ -221,7 +222,10 @@ async function scrape() {
     // ------------------------------------------------------------------
     // 1. Load the public case search page
     // ------------------------------------------------------------------
-    await page.goto(SOURCE_URL, { waitUntil: 'networkidle', timeout: 60_000 });
+    await withRetry(
+      () => page.goto(SOURCE_URL, { waitUntil: 'networkidle', timeout: 60_000 }),
+      3, 5000
+    );
 
     // ------------------------------------------------------------------
     // 2. Fill in the search form
