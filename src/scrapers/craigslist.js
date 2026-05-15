@@ -38,6 +38,79 @@ function extractPhone(text) {
   return match ? match[0].trim() : null;
 }
 
+// ─── Pure normalization ───────────────────────────────────────────────────────
+
+/**
+ * Normalize an array of raw Craigslist items (already fetched from both the
+ * list page and detail pages) into the canonical listing shape.
+ *
+ * This function is pure: no async, no I/O, no side effects.
+ *
+ * @param {Array<{
+ *   href: string,
+ *   title: string|null,
+ *   price: string|null,
+ *   postDate: string|null,
+ *   detail: {
+ *     description: string|null,
+ *     detailPrice: string|null,
+ *     address: string|null
+ *   }|null
+ * }>} rawItems
+ * @returns {Array<object>}
+ */
+function parseListings(rawItems) {
+  return rawItems.map(item => {
+    const detail = item.detail;
+
+    if (!detail) {
+      // Detail fetch failed — emit a minimal record so the URL is captured
+      return {
+        address:         null,
+        owner_name:      null,
+        signal_type:     'fsbo_craigslist',
+        asking_price:    parseDollars(item.price),
+        estimated_value: null,
+        arv:             null,
+        fair_offer:      null,
+        comparables:     null,
+        contact_info:    null,
+        source_url:      item.href,
+        raw: {
+          post_title:  item.title || null,
+          post_date:   item.postDate || null,
+          description: null,
+        },
+      };
+    }
+
+    // Resolve price: prefer search-result price, fall back to detail page price
+    const priceRaw = item.price || detail.detailPrice;
+    const askingPrice = parseDollars(priceRaw);
+
+    // Extract phone from description
+    const contactInfo = extractPhone(detail.description || '');
+
+    return {
+      address:         detail.address || null,
+      owner_name:      null,
+      signal_type:     'fsbo_craigslist',
+      asking_price:    askingPrice,
+      estimated_value: null,
+      arv:             null,
+      fair_offer:      null,
+      comparables:     null,
+      contact_info:    contactInfo,
+      source_url:      item.href,
+      raw: {
+        post_title:  item.title || null,
+        post_date:   item.postDate || null,
+        description: detail.description || null,
+      },
+    };
+  });
+}
+
 // ─── Main scraper ─────────────────────────────────────────────────────────────
 
 /**
@@ -49,7 +122,7 @@ async function scrape() {
   const { browser, context, page } = await launchBrowser();
 
   try {
-    const listings = [];
+    const rawItems = [];
     let offset = 0;
 
     // ── Pagination loop ──────────────────────────────────────────────────────
@@ -144,52 +217,11 @@ async function scrape() {
             return { description, detailPrice, address };
           });
 
-          // Resolve price: prefer search-result price, fall back to detail page price
-          const priceRaw = item.price || detail.detailPrice;
-          const askingPrice = parseDollars(priceRaw);
-
-          // Extract phone from description
-          const contactInfo = extractPhone(detail.description || '');
-
-          listings.push({
-            address:         detail.address || null,
-            owner_name:      null,
-            signal_type:     'fsbo_craigslist',
-            asking_price:    askingPrice,
-            estimated_value: null,
-            arv:             null,
-            fair_offer:      null,
-            comparables:     null,
-            contact_info:    contactInfo,
-            source_url:      item.href,
-            raw: {
-              post_title:  item.title || null,
-              post_date:   item.postDate || null,
-              description: detail.description || null,
-            },
-          });
+          rawItems.push({ ...item, detail });
         } catch (detailErr) {
-          // Non-fatal: skip bad posts gracefully
+          // Non-fatal: capture the item with null detail so URL is preserved
           console.warn(`[craigslist] Detail fetch failed for ${item.href}: ${detailErr.message}. Skipping.`);
-
-          // Still add a minimal record so the post URL is captured
-          listings.push({
-            address:         null,
-            owner_name:      null,
-            signal_type:     'fsbo_craigslist',
-            asking_price:    parseDollars(item.price),
-            estimated_value: null,
-            arv:             null,
-            fair_offer:      null,
-            comparables:     null,
-            contact_info:    null,
-            source_url:      item.href,
-            raw: {
-              post_title:  item.title || null,
-              post_date:   item.postDate || null,
-              description: null,
-            },
-          });
+          rawItems.push({ ...item, detail: null });
         } finally {
           await detailPage.close();
         }
@@ -199,6 +231,7 @@ async function scrape() {
       offset += PAGE_SIZE;
     }
 
+    const listings = parseListings(rawItems);
     console.log(`[craigslist] Returning ${listings.length} listing(s) total.`);
     return listings;
   } finally {
@@ -206,4 +239,4 @@ async function scrape() {
   }
 }
 
-module.exports = { scrape };
+module.exports = { scrape, parseListings };
