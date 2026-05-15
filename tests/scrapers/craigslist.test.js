@@ -80,6 +80,14 @@ test('parseListings: empty array returns []', () => {
   expect(parseListings([])).toEqual([]);
 });
 
+// ─── Test 3b: non-array argument throws TypeError ─────────────────────────────
+
+test('parseListings: throws TypeError for non-array input', () => {
+  expect(() => parseListings(null)).toThrow(TypeError);
+  expect(() => parseListings('string')).toThrow(TypeError);
+  expect(() => parseListings(42)).toThrow(TypeError);
+});
+
 // ─── Test 4: parseDollars edge cases via parseListings ────────────────────────
 
 test('parseListings: price parsing handles edge cases correctly', () => {

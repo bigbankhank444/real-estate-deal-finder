@@ -59,7 +59,10 @@ function extractPhone(text) {
  * }>} rawItems
  * @returns {Array<object>}
  */
-function parseListings(rawItems) {
+function parseListings(rawItems = []) {
+  if (!Array.isArray(rawItems)) {
+    throw new TypeError(`parseListings: expected Array, got ${typeof rawItems}`);
+  }
   return rawItems.map(item => {
     const detail = item.detail;
 
