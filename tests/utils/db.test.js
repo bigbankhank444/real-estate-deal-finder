@@ -16,6 +16,7 @@ describe('getDb', () => {
 
     expect(Pool).toHaveBeenCalledWith({
       connectionString: 'postgres://test:test@localhost:5432/testdb',
+      ssl: false,
     });
   });
 
