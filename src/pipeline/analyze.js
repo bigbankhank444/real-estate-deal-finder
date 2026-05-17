@@ -23,7 +23,8 @@ Respond with ONLY this JSON object:
 
       let parsed;
       try {
-        parsed = JSON.parse(response);
+        const cleaned = response.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+        parsed = JSON.parse(cleaned);
       } catch {
         throw new Error(`Invalid JSON response: ${response}`);
       }
