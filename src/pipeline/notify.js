@@ -4,7 +4,7 @@ const { sendSMS } = require('../utils/sms');
 
 async function notify(deals) {
   const qualifyingDeals = deals
-    .filter((d) => d.score >= 70)
+    .filter((d) => d.score >= 50)
     .sort((a, b) => b.score - a.score);
 
   if (qualifyingDeals.length === 0) {

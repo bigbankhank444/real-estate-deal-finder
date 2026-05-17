@@ -7,6 +7,7 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "migrate": "node scripts/migrate.js",
+    "dashboard": "node dashboard.js",
     "test": "jest"
   },
   "dependencies": {

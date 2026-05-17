@@ -13,19 +13,21 @@ async function analyze(listings) {
     }
 
     try {
-      const prompt = `You are a real estate wholesaling deal analyst. Evaluate this potential wholesale deal and respond with ONLY valid JSON — no other text, no markdown, no code fences.
+      const prompt = `You are a real estate wholesaling deal analyst. Score this potential wholesale deal.
 
 Deal details:
 - Address: ${listing.address}
 - Signal type: ${listing.signal_type}
-- Asking price: $${listing.asking_price}
-- Estimated value: $${listing.estimated_value}
-- Comparables: ${JSON.stringify(listing.comparables)}
+- Asking price: $${listing.asking_price ?? 'unknown'}
+- Estimated value: $${listing.estimated_value ?? 'unknown'}
+- Comparables: ${listing.comparables ? JSON.stringify(listing.comparables) : 'none available'}
 
-Respond with ONLY this JSON object:
-{ "score": <integer 0-100>, "rationale": <string explaining the score> }`;
+Return JSON with exactly two keys: "score" (integer 0-100) and "rationale" (one sentence string). Score 60+ only if the deal shows clear margin or distress signal. Score 30-59 for possible deals with limited data. Score below 30 for insufficient information.`;
 
-      const response = await chat([{ role: 'user', content: prompt }]);
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        { response_format: { type: 'json_object' } }
+      );
 
       let parsed;
       try {
