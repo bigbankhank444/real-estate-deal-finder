@@ -9,6 +9,13 @@ const PAGE_SIZE = 120;
 // Matches common US phone number formats in free text
 const PHONE_REGEX = /\b(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/;
 
+// Rejects map copyright attribution scraped as address (e.g. "© craigslist - Map data © OpenStreetMap")
+function isValidAddress(addr) {
+  if (!addr) return false;
+  const s = addr.trim();
+  return s.length > 0 && !s.startsWith('©') && !/openstreetmap|craigslist/i.test(s);
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -95,7 +102,7 @@ function parseListings(rawItems = []) {
     const contactInfo = extractPhone(detail.description || '');
 
     return {
-      address:         detail.address || null,
+      address:         isValidAddress(detail.address) ? detail.address : null,
       owner_name:      null,
       signal_type:     'fsbo_craigslist',
       asking_price:    askingPrice,

@@ -6,6 +6,12 @@ async function analyze(listings) {
   for (const listing of listings) {
     const scored = { ...listing, score: null };
 
+    // Nothing to score — skip the AI call to save tokens
+    if (!listing.address && !listing.estimated_value && !listing.arv) {
+      results.push(scored);
+      continue;
+    }
+
     try {
       const prompt = `You are a real estate wholesaling deal analyst. Evaluate this potential wholesale deal and respond with ONLY valid JSON — no other text, no markdown, no code fences.
 
